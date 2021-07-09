@@ -20,7 +20,7 @@ import {
   useUserSigner,
 } from "./hooks";
 // import Hints from "./Hints";
-import { ExampleUI, Hints, Subgraph } from "./views";
+import { ExampleUI, Hints, Subgraph, RemitDeposit } from "./views";
 
 const { ethers } = require("ethers");
 /*
@@ -56,8 +56,12 @@ if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
 //
 // attempt to connect to our own scaffold eth rpc and if that fails fall back to infura...
 // Using StaticJsonRpcProvider as the chainId won't change see https://github.com/ethers-io/ethers.js/issues/901
-const scaffoldEthProvider = navigator.onLine ? new ethers.providers.StaticJsonRpcProvider("https://rpc.scaffoldeth.io:48544") : null;
-const mainnetInfura = navigator.onLine ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID) : null;
+const scaffoldEthProvider = navigator.onLine
+  ? new ethers.providers.StaticJsonRpcProvider("https://rpc.scaffoldeth.io:48544")
+  : null;
+const mainnetInfura = navigator.onLine
+  ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID)
+  : null;
 // ( ⚠️ Getting "failed to meet quorum" errors? Check your INFURA_I )
 
 // 🏠 Your local provider is usually pointed at your local blockchain
@@ -72,14 +76,11 @@ const blockExplorer = targetNetwork.blockExplorer;
 
 // Coinbase walletLink init
 const walletLink = new WalletLink({
-  appName: 'coinbase',
+  appName: "coinbase",
 });
 
 // WalletLink provider
-const walletLinkProvider = walletLink.makeWeb3Provider(
-    `https://mainnet.infura.io/v3/${INFURA_ID}`,
-    1,
-);
+const walletLinkProvider = walletLink.makeWeb3Provider(`https://mainnet.infura.io/v3/${INFURA_ID}`, 1);
 
 /*
   Web3 modal helps us "connect" external wallets:
@@ -87,23 +88,24 @@ const walletLinkProvider = walletLink.makeWeb3Provider(
 const web3Modal = new Web3Modal({
   network: "mainnet", // Optional. If using WalletConnect on xDai, change network to "xdai" and add RPC info below for xDai chain.
   cacheProvider: true, // optional
-  theme:"light", // optional. Change to "dark" for a dark theme.
+  theme: "light", // optional. Change to "dark" for a dark theme.
   providerOptions: {
     walletconnect: {
       package: WalletConnectProvider, // required
       options: {
         infuraId: INFURA_ID,
         rpc: {
-          1:'https://mainnet.infura.io/v3/${INFURA_ID}', // mainnet // For more WalletConnect providers: https://docs.walletconnect.org/quick-start/dapps/web3-provider#required
-          100:"https://dai.poa.network", // xDai
+          1: "https://mainnet.infura.io/v3/${INFURA_ID}", // mainnet // For more WalletConnect providers: https://docs.walletconnect.org/quick-start/dapps/web3-provider#required
+          100: "https://dai.poa.network", // xDai
         },
       },
     },
-    'custom-walletlink': {
+    "custom-walletlink": {
       display: {
-        logo: 'https://play-lh.googleusercontent.com/PjoJoG27miSglVBXoXrxBSLveV6e3EeBPpNY55aiUUBM9Q1RCETKCOqdOkX2ZydqVf0',
-        name: 'Coinbase',
-        description: 'Connect to Coinbase Wallet (not Coinbase App)',
+        logo:
+          "https://play-lh.googleusercontent.com/PjoJoG27miSglVBXoXrxBSLveV6e3EeBPpNY55aiUUBM9Q1RCETKCOqdOkX2ZydqVf0",
+        name: "Coinbase",
+        description: "Connect to Coinbase Wallet (not Coinbase App)",
       },
       package: walletLinkProvider,
       connector: async (provider, options) => {
@@ -211,16 +213,18 @@ function App(props) {
       mainnetContracts
     ) {
       console.log("_____________________________________ 🏗 scaffold-eth _____________________________________");
-      console.log("🌎 mainnetProvider", mainnetProvider);
-      console.log("🏠 localChainId", localChainId);
-      console.log("👩‍💼 selected address:", address);
-      console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
-      console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-      console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
-      console.log("📝 readContracts", readContracts);
-      console.log("🌍 DAI contract on mainnet:", mainnetContracts);
-      console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
-      console.log("🔐 writeContracts", writeContracts);
+      if (DEBUG) {
+        console.log("🌎 mainnetProvider", mainnetProvider);
+        console.log("🏠 localChainId", localChainId);
+        console.log("👩‍💼 selected address:", address);
+        console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
+        console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
+        console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
+        console.log("📝 readContracts", readContracts);
+        console.log("🌍 DAI contract on mainnet:", mainnetContracts);
+        console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
+        console.log("🔐 writeContracts", writeContracts);
+      }
     }
   }, [
     mainnetProvider,
@@ -379,6 +383,16 @@ function App(props) {
               YourContract
             </Link>
           </Menu.Item>
+          <Menu.Item key="/deposit">
+            <Link
+              onClick={() => {
+                setRoute("/deposit");
+              }}
+              to="/deposit"
+            >
+              Deposit
+            </Link>
+          </Menu.Item>
           <Menu.Item key="/hints">
             <Link
               onClick={() => {
@@ -428,6 +442,13 @@ function App(props) {
                 this <Contract/> component will automatically parse your ABI
                 and give you a form to interact with it locally
             */}
+            <Contract
+              name="Remittance"
+              signer={userSigner}
+              provider={localProvider}
+              address={address}
+              blockExplorer={blockExplorer}
+            />
 
             <Contract
               name="YourContract"
@@ -435,6 +456,20 @@ function App(props) {
               provider={localProvider}
               address={address}
               blockExplorer={blockExplorer}
+            />
+          </Route>
+          <Route path="/deposit">
+            <RemitDeposit
+              address={address}
+              userSigner={userSigner}
+              mainnetProvider={mainnetProvider}
+              localProvider={localProvider}
+              yourLocalBalance={yourLocalBalance}
+              price={price}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              depositData={args => _deposit(args)}
             />
           </Route>
           <Route path="/hints">
@@ -550,6 +585,11 @@ function App(props) {
       </div>
     </div>
   );
+}
+
+async function _deposit(args) {
+  console.log("_deposit::fn:args:", args);
+  //const genKey = readContracts.Remittance.generateKey(args.remitter, args.password);
 }
 
 export default App;
