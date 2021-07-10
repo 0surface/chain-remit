@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AddressInput, Address, Balance, EtherInput } from "../components";
 import { utils, BigNumber } from "ethers";
+import { formatEther, parseEther } from "@ethersproject/units";
 import "bootstrap/dist/css/bootstrap.css";
 import { Button, Card, DatePicker, Divider, Input, Spin } from "antd";
 
@@ -110,9 +111,21 @@ export default function Deposit({
     handleSubmitErrors(e);
   }
 
+  const depositFunds = async (remitKey, lockDuration, amount) => {
+    tx(
+      await writeContracts.Remittance.deposit(remitKey, lockDuration, {
+        value: parseEther(amount),
+      }),
+    );
+  };
+
   async function handleDepositClick() {
     console.log("::inside handleDepositClick::================================================================");
+    console.log("userSigner", userSigner);
     console.log("deposit.remitter, deposit.password::", deposit.remitter, deposit.password);
+    console.log("deposit.amount::", deposit.amount);
+    console.log("parseEther(deposit.amount)::", parseEther(deposit.amount));
+    console.log("Number(parseEther(deposit.amount))::", Number(parseEther(deposit.amount)));
 
     const _remitKey = await readContracts.Remittance.generateKey(
       deposit.remitter,
@@ -121,18 +134,26 @@ export default function Deposit({
     console.log("_remitKey", _remitKey);
     deposit.remitKey = _remitKey;
 
-    const { senderError, remitterError, passwordError, lockDurationError, amountError, ...data } = deposit;
-    depositData({
-      data,
-    });
+    //depositFunds(_remitKey, deposit.lockDuration, deposit.amount);
+
+    // const { senderError, remitterError, passwordError, lockDurationError, amountError, ...data } = deposit;
+    // depositData({
+    //   data,
+    // });
+
+    // tx(
+    //   await writeContracts.Remittance.deposit(_remitKey, deposit.lockDuration, {
+    //     value: parseEther(deposit.amount),
+    //   }),
+    // );
 
     const depositTxObj = await writeContracts.Remittance.deposit(deposit.remitKey, deposit.lockDuration, {
-      value: BigNumber.from(deposit.amount * 1000000000000000000),
+      value: parseEther(deposit.amount),
     });
     const depositTxRecepit = await depositTxObj.wait();
-
     console.log("depositTxObj", depositTxObj);
     console.log("depositTxRecepit", depositTxRecepit);
+    //TODO : save successful tx data to persistant storage
     console.log("::inside handleDepositClick::================================================================");
   }
 
@@ -148,7 +169,7 @@ export default function Deposit({
         <div>OR</div>
         <Balance address={address} provider={localProvider} price={price} />
         <Divider />
-        <label for="depositor">Sender</label>
+        <label>Sender</label>
         <AddressInput
           id="sender"
           name="sender"
@@ -159,7 +180,7 @@ export default function Deposit({
             handleChange(e, value, "sender");
           }}
         />
-        <label for="remitter">Remitter</label>
+        <label>Remitter</label>
         <AddressInput
           id="remitter"
           name="remitter"
@@ -170,7 +191,7 @@ export default function Deposit({
             handleChange(e, value, "remitter");
           }}
         />
-        <label for="password">Password</label>
+        <label>Password</label>
         <Input
           id="password"
           name="password"

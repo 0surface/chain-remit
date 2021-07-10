@@ -1,4 +1,5 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
+
 import WalletLink from "walletlink";
 import { Alert, Button, Col, Menu, Row } from "antd";
 import "antd/dist/antd.css";
@@ -469,7 +470,6 @@ function App(props) {
               tx={tx}
               writeContracts={writeContracts}
               readContracts={readContracts}
-              depositData={args => _deposit(args)}
             />
           </Route>
           <Route path="/hints">
@@ -585,11 +585,6 @@ function App(props) {
       </div>
     </div>
   );
-}
-
-async function _deposit(args) {
-  console.log("_deposit::fn:args:", args);
-  //const genKey = readContracts.Remittance.generateKey(args.remitter, args.password);
 }
 
 export default App;
