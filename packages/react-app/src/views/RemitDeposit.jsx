@@ -206,17 +206,7 @@ export default function Deposit({
   return (
     <div>
       <div style={{ border: "1px solid #cccccc", padding: 16, width: 550, margin: "auto", marginTop: 64 }}>
-        <Divider />
-        Your Address:
-        <Address address={address} ensProvider={mainnetProvider} fontSize={16} />
-        <Divider />
-        {/* use utils.formatEther to display a BigNumber: */}
-        <h2>Your Balance: {yourLocalBalance ? utils.formatEther(yourLocalBalance) : "..."}</h2>
-        <div>OR</div>
-        <Balance address={address} provider={localProvider} price={price} />
-        <Divider />
-        <Divider />
-        <h6>Remit Key</h6>
+        <h5>Remit Key</h5>
         <Input id="remitKey" name="remitKey" disabled value={deposit.remitKey} />
         <Divider />
         <label>Sender</label>
