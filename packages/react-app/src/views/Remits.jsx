@@ -3,6 +3,7 @@ import { Button, Divider, List, Card } from "antd";
 import pouchdb from "../pouchdb/pouchdb";
 import { Address, Balance } from "../components";
 import { utils, BigNumber, ethers } from "ethers";
+import RemitDeadline from "./RemitDeadline";
 
 export default function Remits({ address, mainnetProvider, localProvider, yourLocalBalance, price }) {
   pouchdb.init();
@@ -28,23 +29,21 @@ export default function Remits({ address, mainnetProvider, localProvider, yourLo
         <Divider />
         <h3>TOTAL:{remitData === undefined ? "0" : remitData.length}</h3>
         <List
-          grid={{ gutter: 16, column: 2 }}
+          grid={{ gutter: 16, column: 1 }}
           dataSource={remitData}
           renderItem={item => (
             <List.Item>
-              <Card title={<Address address={item.remitter} ensProvider={mainnetProvider} fontSize={14} />}>
+              <div style={{ display: "inline-block", width: "100%", justifyContent: "center" }}>
                 <Address address={item.sender} ensProvider={mainnetProvider} fontSize={11} />
                 <Balance balance={utils.parseEther(item.amount)} price={price} />
-                <div>
-                  {item.deadline * 1000 < Date.now() ? "EXpired" : new Date(item.deadline * 1000).toLocaleString()}
-                </div>
-                <div>PASSWORD: {item.password}</div>
+                <RemitDeadline deadlineTimestamp={item.deadline} locale={"en-US"} />
+                {/* <div>PASSWORD: {item.password}</div> */}
                 {item.deadline * 1000 < Date.now() ? (
                   <Button onClick={() => console.log("Refund started ...")}>Refund</Button>
                 ) : (
                   <Button onClick={() => console.log("Withdraw started...")}>Withdraw</Button>
                 )}
-              </Card>
+              </div>
             </List.Item>
           )}
         />

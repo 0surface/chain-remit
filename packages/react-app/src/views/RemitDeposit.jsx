@@ -222,7 +222,7 @@ export default function Deposit({
           //   handleChange(e, value, "sender");
           // }}
         />
-        <label>Remitter</label>
+        <label>SEND TO </label>
         <AddressInput
           id="remitter"
           name="remitter"
