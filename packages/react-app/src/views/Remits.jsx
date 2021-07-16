@@ -1,49 +1,91 @@
 import React, { useState, useEffect } from "react";
 import { Button, Divider, List, Card } from "antd";
+import { RightCircleOutlined } from "@ant-design/icons";
 import pouchdb from "../pouchdb/pouchdb";
 import { Address, Balance } from "../components";
 import { utils, BigNumber, ethers } from "ethers";
 import RemitDeadline from "./RemitDeadline";
+import Withdraw from "./RemitWithdraw";
+import Refund from "./RemitRefund";
+import RemitItem from "./RemitItem";
 
-export default function Remits({ address, mainnetProvider, localProvider, yourLocalBalance, price }) {
+export default function Remits({
+  address,
+  userSigner,
+  mainnetProvider,
+  localProvider,
+  yourLocalBalance,
+  price,
+  tx,
+  writeContracts,
+  readContracts,
+}) {
   pouchdb.init();
-  const _senderAddress = address;
-  console.log("_senderAddress", address);
 
-  const [remitData, setRemitData] = useState();
-  //useEffect(() => {}, [setRemitData]);
+  const [remitData, setRemitData] = useState([]);
+  const [currentTimestamp, setCurrentTimestamp] = useState(Date.now());
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showRefund, setShowRefund] = useState(false);
 
-  async function getRemits() {
-    const db = await pouchdb.fetchBySender(address);
-    setRemitData(db);
-  }
+  useEffect(() => {
+    async function fetchData() {
+      const db = await pouchdb.fetchByRemiiter(address);
+      console.log(db);
+      setRemitData(db);
+    }
+    fetchData();
+  }, [address]);
 
-  async function handleList() {
-    getRemits();
-  }
+  const _withdraw = async password => {
+    if (password) {
+      console.log("Withdraw started...");
+      try {
+        tx(writeContracts.Remittance.withdraw(utils.formatBytes32String(password)));
+        const withdrawTxObj = await writeContracts.Remittance.withdraw(utils.formatBytes32String(password));
+        const withdrawTxRecepit = await withdrawTxObj.wait();
+        console.log("withdrawTxObj", withdrawTxObj);
+        console.log("withdrawTxRecepit", withdrawTxRecepit);
+      } catch (error) {
+        console.log("withdraw::", error);
+      }
+    }
+  };
+  // const currentTimestamp = await localProvider.getBlock("latest");
+
+  const goButton = async isWithdraw => {
+    setCurrentTimestamp(42);
+  };
+
+  const hasExpired = timestamp => {
+    const v = timestamp * 1000 < Date.now();
+    console.log("v", v);
+    return v;
+  };
 
   return (
     <div>
       <div style={{ border: "1px solid #cccccc", padding: 16, width: 800, margin: "auto", marginTop: 64 }}>
-        <Button onClick={handleList}>Get Remits</Button>
-        <Divider />
         <h3>TOTAL:{remitData === undefined ? "0" : remitData.length}</h3>
         <List
           grid={{ gutter: 16, column: 1 }}
           dataSource={remitData}
           renderItem={item => (
             <List.Item>
-              <div style={{ display: "inline-block", width: "100%", justifyContent: "center" }}>
-                <Address address={item.sender} ensProvider={mainnetProvider} fontSize={11} />
-                <Balance balance={utils.parseEther(item.amount)} price={price} />
-                <RemitDeadline deadlineTimestamp={item.deadline} locale={"en-US"} />
-                {/* <div>PASSWORD: {item.password}</div> */}
-                {item.deadline * 1000 < Date.now() ? (
-                  <Button onClick={() => console.log("Refund started ...")}>Refund</Button>
-                ) : (
-                  <Button onClick={() => console.log("Withdraw started...")}>Withdraw</Button>
-                )}
-              </div>
+              <RemitItem
+                address={address}
+                userSigner={userSigner}
+                localProvider={localProvider}
+                mainnetProvider={mainnetProvider}
+                price={price}
+                tx={tx}
+                writeContracts={writeContracts}
+                readContracts={readContracts}
+                remitter={item.remitter}
+                amount={item.amount}
+                deadline={item.deadline}
+                password={item.password}
+                remitKey={item.remitKey}
+              />
             </List.Item>
           )}
         />

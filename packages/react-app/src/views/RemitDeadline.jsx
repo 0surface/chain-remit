@@ -25,10 +25,10 @@ export default function RemitDeadline({ deadlineTimestamp, locale }) {
       {hasExpired ? (
         <>
           <StopOutlined style={{ color: "red", fontsize: 20 }} />
-          &nbsp; {expiredDate(deadlineTimestamp)}
+          &nbsp;<span style={{ color: "red" }}> {expiredDate(deadlineTimestamp)}</span>
         </>
       ) : (
-        deadlineDate(deadlineTimestamp)
+        <span style={{ color: "green" }}>{deadlineDate(deadlineTimestamp)}</span>
       )}
     </>
   );

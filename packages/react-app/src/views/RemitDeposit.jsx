@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { AddressInput, Address, Balance, EtherInput } from "../components";
-import { utils, BigNumber, ethers } from "ethers";
-import { formatEther, parseEther } from "@ethersproject/units";
-import { Button, Card, DatePicker, Divider, Input, Spin } from "antd";
+import { AddressInput, EtherInput } from "../components";
+import { utils, ethers } from "ethers";
+import { parseEther } from "@ethersproject/units";
+import { Button, Divider, Input, Spin } from "antd";
 import pouchdb from "../pouchdb/pouchdb";
 
 const emptyDeposit = {
@@ -33,8 +33,7 @@ export default function Deposit({
   tx,
   writeContracts,
   readContracts,
-  depositRemit,
-  depositData,
+  logDepositedEvent,
 }) {
   const [deposit, setDeposit] = useState(emptyDeposit);
 
@@ -94,8 +93,11 @@ export default function Deposit({
     if (deposit.lockDuration > 3153600000) {
       deposit.lockDurationError = "Lock duration can not be longer than 100 years";
     }
+    if (deposit.lockDuration < 1) {
+      deposit.lockDurationError = "Lock duration can not be empty";
+    }
     //-----------------
-    if (deposit.amount < 1) {
+    if (deposit.amount < parseEther((2 * 10) ^ -18)) {
       deposit.amountError = "Minimum deposit amount of 2 wei required";
     }
   }
@@ -110,18 +112,13 @@ export default function Deposit({
   }
 
   function handleSubmit(e) {
-    //e.preventDefault();
-    handleSubmitValidation(e);
-    handleSubmitErrors(e);
-  }
+    e.preventDefault();
 
-  const depositFunds = async (remitKey, lockDuration, amount) => {
-    tx(
-      await writeContracts.Remittance.deposit(deposit.remitKey, lockDuration, {
-        value: parseEther(amount),
-      }),
-    );
-  };
+    //handleSubmitValidation(e);
+    //handleSubmitErrors(e);
+    console.log("deposit obj::", deposit);
+    handleDepositClick();
+  }
 
   const _generateRemitKey = async () => {
     if (deposit && deposit.remitter && deposit.password) {
@@ -135,71 +132,36 @@ export default function Deposit({
   };
 
   async function handleDepositClick() {
-    console.log("::inside handleDepositClick::================================================================");
-    console.log("userSigner", userSigner);
-    console.log("deposit::", deposit);
-    // console.log("deposit.remitter, deposit.password::", deposit.remitter, deposit.password);
-    // console.log("deposit.amount::", deposit.amount);
-    // console.log("deposit.lockDuration::", deposit.lockDuration);
+    let _remitKey;
+    if (!deposit.remitKey) {
+      console.log("regenerate remit key");
+      _remitKey = _generateRemitKey();
+    }
 
-    // console.log("parseEther(deposit.amount)::", parseEther(deposit.amount));
-    // console.log("Number(parseEther(deposit.amount))::", Number(parseEther(deposit.amount)));
-
-    const _remitKey = await _generateRemitKey();
-
-    //depositFunds(_remitKey, deposit.lockDuration, deposit.amount);
-
-    // const { senderError, remitterError, passwordError, lockDurationError, amountError, ...data } = deposit;
-    // depositData({
-    //   data,
-    // });
-
-    // tx(
-    //   await writeContracts.Remittance.deposit(deposit.remitKey, deposit.lockDuration, {
-    //     value: parseEther(deposit.amount.toString()),
-    //   }),
-    // );
-
-    const depositTxObj = await writeContracts.Remittance.deposit(deposit.remitKey, deposit.lockDuration, {
-      value: parseEther(deposit.amount),
-    });
-    const depositTxRecepit = await depositTxObj.wait();
-    console.log("depositTxObj", depositTxObj);
-    console.log("depositTxRecepit", depositTxRecepit);
-
-    //TODO : save successful tx data to persistant storage
-    const withdrawalDeadline = Number(depositTxRecepit.events[0].args[3]);
-    console.log("txBlock", withdrawalDeadline);
-
-    const txId = depositTxObj.hash.toString();
-    console.log("txId", txId);
-
-    pouchdb.init();
-    const remitRecord = pouchdb.setRemit(
-      txId,
-      userSigner.address.toString(),
-      deposit.remitter,
-      deposit.password,
-      deposit.lockDuration,
-      deposit.amount,
-      _remitKey,
-      withdrawalDeadline,
+    const depositTxObj = await tx(
+      writeContracts.Remittance.deposit(deposit.remitKey, deposit.lockDuration, {
+        value: parseEther(deposit.amount),
+      }),
     );
-    const saveResult = await pouchdb.save(remitRecord);
-    console.log("saveResult", saveResult);
+    console.log("logDepositedEvent", logDepositedEvent);
 
-    const getresult = await pouchdb.get(saveResult.id);
-    console.log("getresult", getresult);
-
-    const fetchAll = await pouchdb.fetchAll();
-    console.log("fetchAll", fetchAll);
-
-    const fetchBySender = await pouchdb.fetchBySender(userSigner.address);
-    console.log("fetchBySender", fetchBySender);
-
-    const fetchByRemiiter = await pouchdb.fetchByRemiiter(deposit.remitter);
-    console.log("fetchByRemiiter", fetchByRemiiter);
-
+    depositTxObj.wait().then(txRecepit => {
+      pouchdb.init();
+      pouchdb
+        .save(
+          pouchdb.setRemit(
+            txRecepit.transactionHash,
+            userSigner.address,
+            deposit.remitter,
+            deposit.password,
+            deposit.lockDuration,
+            deposit.amount,
+            _remitKey,
+            Number(txRecepit.events[0].args[3]),
+          ),
+        )
+        .then(saveResult => console.log("saveResult", saveResult));
+    });
     console.log("::inside handleDepositClick::================================================================");
   }
 
@@ -218,9 +180,9 @@ export default function Deposit({
           value={address}
           ensProvider={mainnetProvider}
           placeholder="Enter Depositor"
-          // onChange={(e, value) => {
-          //   handleChange(e, value, "sender");
-          // }}
+          onChange={(e, value) => {
+            handleChange(e, value, "sender");
+          }}
         />
         <label>SEND TO </label>
         <AddressInput
@@ -233,8 +195,12 @@ export default function Deposit({
             handleChange(e, value, "remitter");
           }}
         />
+        <span id="remitterError" name="remitterError" style={{ color: "red" }} value={deposit.remitterError}>
+          {deposit.remitterError}
+        </span>
+        <br />
         <label>Password</label>
-        <Input
+        <Input.Password
           id="password"
           name="password"
           type="password"
@@ -247,6 +213,9 @@ export default function Deposit({
             _generateRemitKey();
           }}
         />
+        <span id="passwordError" name="passwordError" style={{ color: "red" }} value={deposit.passwordError}>
+          {deposit.passwordError}
+        </span>
         <br />
         <label>Lock Duration Seconds</label>
         <Input
@@ -261,6 +230,15 @@ export default function Deposit({
             handleChange(e, value, "lockDuration");
           }}
         />
+        <span
+          id="lockDurationError"
+          name="lockDurationError"
+          style={{ color: "red" }}
+          value={deposit.lockDurationError}
+        >
+          {deposit.remitterError}
+        </span>
+
         <br />
         <label>Amount</label>
         <EtherInput
@@ -271,8 +249,11 @@ export default function Deposit({
             handleChange(e, value, "amount");
           }}
         />
+        <span id="amountError" name="amountError" style={{ color: "red" }} value={deposit.amountError}>
+          {deposit.remitterError}
+        </span>
         <br />
-        <Button onClick={handleDepositClick}>Deposit</Button>
+        <Button onClick={handleSubmit}>Deposit</Button>
       </div>
     </div>
   );
