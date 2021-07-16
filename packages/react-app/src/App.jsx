@@ -179,7 +179,7 @@ function App(props) {
 
   // If you want to call a function on a new block
   useOnBlock(mainnetProvider, () => {
-    console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
+    //console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
   });
 
   // Then read your DAI balance like:
@@ -192,6 +192,10 @@ function App(props) {
 
   // 📟 Listen for broadcast events
   const setPurposeEvents = useEventListener(readContracts, "YourContract", "SetPurpose", localProvider, 1);
+
+  const logDepositedEvent = useEventListener(readContracts, "Remittance", "LogDeposited", localProvider, 1);
+  const logWithdrawalEvent = useEventListener(readContracts, "Remittance", "LogWithdrawal", localProvider, 1);
+  const logRefundEvent = useEventListener(readContracts, "Remittance", "LogRefund", localProvider, 1);
 
   /*
   const addressFromENS = useResolveName(mainnetProvider, "austingriffith.eth");
@@ -215,16 +219,16 @@ function App(props) {
     ) {
       console.log("_____________________________________ 🏗 scaffold-eth _____________________________________");
       if (DEBUG) {
-        console.log("🌎 mainnetProvider", mainnetProvider);
-        console.log("🏠 localChainId", localChainId);
-        console.log("👩‍💼 selected address:", address);
-        console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
-        console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-        console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
-        console.log("📝 readContracts", readContracts);
-        console.log("🌍 DAI contract on mainnet:", mainnetContracts);
-        console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
-        console.log("🔐 writeContracts", writeContracts);
+        // console.log("🌎 mainnetProvider", mainnetProvider);
+        // console.log("🏠 localChainId", localChainId);
+        // console.log("👩‍💼 selected address:", address);
+        // console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
+        // console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
+        // console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
+        // console.log("📝 readContracts", readContracts);
+        // console.log("🌍 DAI contract on mainnet:", mainnetContracts);
+        // console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
+        // console.log("🔐 writeContracts", writeContracts);
       }
     }
   }, [
@@ -490,6 +494,7 @@ function App(props) {
               tx={tx}
               writeContracts={writeContracts}
               readContracts={readContracts}
+              logDepositedEvent={logDepositedEvent}
             />
           </Route>
           <Route path="/withdraw">
@@ -508,10 +513,13 @@ function App(props) {
           <Route path="/remits">
             <Remits
               address={address}
+              userSigner={userSigner}
               mainnetProvider={mainnetProvider}
               localProvider={localProvider}
               yourLocalBalance={yourLocalBalance}
               price={price}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
             />
           </Route>
           <Route path="/hints">

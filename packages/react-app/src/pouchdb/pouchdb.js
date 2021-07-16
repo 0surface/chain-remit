@@ -41,28 +41,17 @@ async function fetchBySender(_sender) {
   try {
     const docs = await db.allDocs({ include_docs: true });
     return docs.rows.map(d => d.doc).filter(d => d.sender === _sender);
-
-    // console.log("fetchBySender::_sender:", _sender);
-    // const docs = await db.allDocs({ include_docs: true });
-    // console.log("fetchBySender::docs", docs);
-    // console.log("fetchBySender::docs.rows", docs.rows);
-    // const x = docs.rows.map(d => d.doc);
-    // console.log("fetchBySender::docs.rows.map:", x);
-
-    // const y = x.filter(d => d.sender === _sender);
-    // console.log("fetchBySender::docs.rows.map.filter:", y);
-    // return y;
   } catch (ex) {
-    console.error("fetchData error: ", ex);
+    console.error("Pouchdb::fetchBySender:error: ", ex);
   }
 }
 
 async function fetchByRemiiter(_remitter) {
   try {
     const docs = await db.allDocs({ include_docs: true });
-    return docs.rows.filter(d => d.doc.remitter === _remitter);
+    return docs.rows.map(d => d.doc).filter(d => d.remitter === _remitter);
   } catch (ex) {
-    console.error("fetchData error: ", ex);
+    console.error("Pouchdb::fetchByRemiiter:error: ", ex);
   }
 }
 export default {
