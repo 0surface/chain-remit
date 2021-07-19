@@ -138,30 +138,48 @@ export default function Deposit({
       _remitKey = _generateRemitKey();
     }
 
-    const depositTxObj = await tx(
-      writeContracts.Remittance.deposit(deposit.remitKey, deposit.lockDuration, {
-        value: parseEther(deposit.amount),
-      }),
-    );
-    console.log("logDepositedEvent", logDepositedEvent);
+    try {
+      const depositCallStatic = await writeContracts.Remittance.callStatic.deposit(
+        deposit.remitKey,
+        deposit.lockDuration,
+        {
+          value: parseEther(deposit.amount),
+        },
+      );
 
-    depositTxObj.wait().then(txRecepit => {
+      console.log("depositCallStatic:callTx", callTx);
+    } catch (err) {
+      console.log("depositCallStatic:callTx:error", err);
+      return;
+    }
+    try {
+      const depositTxObj = await tx(
+        writeContracts.Remittance.deposit(deposit.remitKey, deposit.lockDuration, {
+          value: parseEther(deposit.amount),
+        }),
+      );
+      //console.log("logDepositedEvent", logDepositedEvent);
+
+      const depositTxRecepit = await depositTxObj.wait();
+
       pouchdb.init();
-      pouchdb
-        .save(
-          pouchdb.setRemit(
-            txRecepit.transactionHash,
-            userSigner.address,
-            deposit.remitter,
-            deposit.password,
-            deposit.lockDuration,
-            deposit.amount,
-            _remitKey,
-            Number(txRecepit.events[0].args[3]),
-          ),
-        )
-        .then(saveResult => console.log("saveResult", saveResult));
-    });
+      const saveResult = await pouchdb.save(
+        pouchdb.setRemit(
+          depositTxRecepit.transactionHash,
+          userSigner.address,
+          deposit.remitter,
+          deposit.password,
+          deposit.lockDuration,
+          deposit.amount,
+          _remitKey,
+          Number(depositTxRecepit.events[0].args[3]),
+        ),
+      );
+      console.log("saveResult", saveResult);
+    } catch (depositTxError) {
+      console.log("depositTxError:error", depositTxError);
+    }
+
     console.log("::inside handleDepositClick::================================================================");
   }
 

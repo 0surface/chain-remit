@@ -29,28 +29,41 @@ export default function Withdraw({
     if (password) {
       console.log("Withdraw started...");
       console.log("writeContracts", writeContracts);
+      console.log("readContracts", readContracts);
       console.log("userSigner", userSigner);
       console.log("address", address);
       console.log("password", password);
-      console.log("utils.formatBytes32String(password)", utils.formatBytes32String(password));
+
+      const bytes32Password = utils.formatBytes32String(password);
+      console.log("bytes32Password", bytes32Password);
+
+      const _remitKey = await readContracts.Remittance.generateKey(address, bytes32Password);
+      console.log("_remitKey", _remitKey);
+      const ledgerValue = await readContracts.Remittance.ledger(_remitKey);
+      console.log("ledgerValue", ledgerValue);
+      console.log("ledgerValue", Number(ledgerValue[0]));
+      try {
+        const staticCallTx = await writeContracts.Remittance.callStatic.withdraw(bytes32Password);
+        console.log("staticCallTx", staticCallTx);
+      } catch (staticCallTxError) {
+        console.error("staticCallTx:Error::", staticCallTxError);
+        return;
+      }
 
       try {
-        const _remitKey = await readContracts.Remittance.generateKey(address, utils.formatBytes32String(password));
-        console.log("_remitKey", _remitKey);
-        const ledgerValue = await readContracts.Remittance.ledger(_remitKey);
-        console.log("ledgerValue", ledgerValue);
-        console.log("ledgerValue", Number(ledgerValue[0]));
-
-        const callTx = await localProvider.call(writeContracts.Remittance.withdraw(_remitKey));
-        console.log("callTx", callTx);
-
-        // const withdrawTxObj = await tx(writeContracts.Remittance.withdraw(utils.formatBytes32String(password)));
-        // const withdrawTxRecepit = await withdrawTxObj.wait();
-        // console.log("withdrawTxObj", withdrawTxObj);
-        // console.log("withdrawTxRecepit", withdrawTxRecepit);
+        const withdrawTxObj = await tx(writeContracts.Remittance.withdraw(bytes32Password));
+        const withdrawTxRecepit = await withdrawTxObj.wait();
+        console.log("withdrawTxObj", withdrawTxObj);
+        console.log("withdrawTxRecepit", withdrawTxRecepit);
+        const withdrawEvent = withdrawTxRecepit.events[0];
+        const args = withdrawEvent.args;
+        console.log("key", args.key);
+        console.log("withdrawer", args.withdrawer);
+        console.log("kewithdrawny", Number(args.withdrawn));
+        console.log("receiverPassword", utils.parseBytes32String(args.receiverPassword));
       } catch (error) {
-        console.log("withdraw::", error);
-        error.data.message !== undefined && console.log("withdraw::Error", error.data.message);
+        console.log("withdrawTx:Error::", error);
+        error.data && error.data !== undefined && console.log("withdraw::Error", error.data.message);
       }
     }
   };
