@@ -147,7 +147,7 @@ export default function Deposit({
         },
       );
 
-      console.log("depositCallStatic:callTx", callTx);
+      console.log("depositCallStatic:callTx", depositCallStatic);
     } catch (err) {
       console.log("depositCallStatic:callTx:error", err);
       return;
