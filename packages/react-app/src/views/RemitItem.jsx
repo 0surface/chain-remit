@@ -18,30 +18,17 @@ export default function RemitItem({
   tx,
   writeContracts,
   readContracts,
+  remitId,
   remitter,
   amount,
   deadline,
   password,
   remitKey,
+  remitHasSettled,
 }) {
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showRefund, setShowRefund] = useState(false);
   const [expanded, setExpanded] = useState(false);
-
-  const _withdraw = async password => {
-    if (password) {
-      console.log("Withdraw started...");
-      try {
-        const withdrawTxObj = await tx(writeContracts.Remittance.withdraw(utils.formatBytes32String(password)));
-        const withdrawTxRecepit = await withdrawTxObj.wait();
-
-        console.log("withdrawTxObj", withdrawTxObj);
-        console.log("withdrawTxRecepit", withdrawTxRecepit);
-      } catch (error) {
-        console.log("withdraw::", error);
-      }
-    }
-  };
 
   const hasExpired = timestamp => {
     return timestamp * 1000 < Date.now();
@@ -51,7 +38,7 @@ export default function RemitItem({
     <div style={{ display: "inline-block", width: "100%", justifyContent: "left" }}>
       <Address address={remitter} ensProvider={mainnetProvider} fontSize={18} />
       <Balance balance={utils.parseEther(amount)} price={price} />
-      <RemitDeadline deadlineTimestamp={deadline} locale={"en-US"} />
+      <RemitDeadline deadlineTimestamp={deadline} remitHasSettled={remitHasSettled} />
 
       {showWithdraw && (
         <Withdraw
@@ -63,19 +50,22 @@ export default function RemitItem({
           writeContracts={writeContracts}
           readContracts={readContracts}
           id={deadline}
+          remitId={remitId}
           remitKey={remitKey}
         />
       )}
       {showRefund && <Refund />}
-      <a
-        onClick={() => {
-          console.log("item::", deadline);
-          hasExpired(deadline) ? setShowRefund(!showRefund) : setShowWithdraw(!showWithdraw);
-          setExpanded(!expanded);
-        }}
-      >
-        &nbsp; {expanded ? <LeftCircleOutlined /> : <RightCircleOutlined />}
-      </a>
+      {!remitHasSettled && (
+        <a
+          onClick={() => {
+            console.log("item::", deadline);
+            hasExpired(deadline) ? setShowRefund(!showRefund) : setShowWithdraw(!showWithdraw);
+            setExpanded(!expanded);
+          }}
+        >
+          &nbsp; {expanded ? <LeftCircleOutlined /> : <RightCircleOutlined />}
+        </a>
+      )}
     </div>
   );
 }

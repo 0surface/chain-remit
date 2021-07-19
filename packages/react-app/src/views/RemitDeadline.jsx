@@ -2,7 +2,7 @@ import React from "react";
 import moment from "moment";
 import { StopOutlined } from "@ant-design/icons";
 
-export default function RemitDeadline({ deadlineTimestamp, locale }) {
+export default function RemitDeadline({ deadlineTimestamp, remitHasSettled }) {
   const hasExpired = deadlineTimestamp < moment().unix();
 
   const deadlineDate = deadlineUnix => {
@@ -13,6 +13,7 @@ export default function RemitDeadline({ deadlineTimestamp, locale }) {
     const isWithinWeek = _timestamp - _now < week;
     return isWithinWeek ? moment(_timestamp).calendar() : moment(_timestamp).format("MMM DD YYYY HH:mm a");
   };
+
   const expiredDate = deadlineUnix => {
     return moment(deadlineUnix * 1000)
       .startOf("day")
@@ -23,12 +24,24 @@ export default function RemitDeadline({ deadlineTimestamp, locale }) {
   return (
     <>
       {hasExpired ? (
+        remitHasSettled ? (
+          <>
+            <span style={{ color: "grey" }}>{"REFUNDED"}</span>
+          </>
+        ) : (
+          <>
+            <StopOutlined style={{ color: "red", fontsize: 20 }} />
+            &nbsp;<span style={{ color: "red" }}> {expiredDate(deadlineTimestamp)}</span>
+          </>
+        )
+      ) : remitHasSettled ? (
         <>
-          <StopOutlined style={{ color: "red", fontsize: 20 }} />
-          &nbsp;<span style={{ color: "red" }}> {expiredDate(deadlineTimestamp)}</span>
+          <span style={{ color: "grey" }}>{"WITHDRAWN"}</span>
         </>
       ) : (
-        <span style={{ color: "green" }}>{deadlineDate(deadlineTimestamp)}</span>
+        <>
+          <span style={{ color: "green" }}>{deadlineDate(deadlineTimestamp)}</span>
+        </>
       )}
     </>
   );

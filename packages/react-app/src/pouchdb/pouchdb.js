@@ -17,6 +17,7 @@ function setRemit(id, sender, remitter, password, lockDuration, amount, remitKey
     amount,
     remitKey,
     deadline,
+    remitHasSettled: false,
   };
   return remit;
 }
@@ -27,6 +28,12 @@ async function save(remit) {
 
 async function get(id) {
   return await db.get(id);
+}
+
+async function update(id, prop, val) {
+  const item = await db.get(`${id}`);
+  item[`${prop}`] = val;
+  return await db.put(item);
 }
 
 async function fetchAll() {
@@ -59,6 +66,7 @@ export default {
   setRemit,
   save,
   get,
+  update,
   fetchAll,
   fetchBySender,
   fetchByRemiiter,

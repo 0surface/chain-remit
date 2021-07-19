@@ -42,11 +42,13 @@ export default function Remits({
                 tx={tx}
                 writeContracts={writeContracts}
                 readContracts={readContracts}
+                remitId={item._id}
                 remitter={item.remitter}
                 amount={item.amount}
                 deadline={item.deadline}
                 password={item.password}
                 remitKey={item.remitKey}
+                remitHasSettled={item.remitHasSettled}
               />
             </List.Item>
           )}
