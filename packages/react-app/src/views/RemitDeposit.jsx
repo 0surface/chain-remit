@@ -4,6 +4,7 @@ import { utils, ethers } from "ethers";
 import { parseEther } from "@ethersproject/units";
 import { Button, Divider, Input, Spin } from "antd";
 import pouchdb from "../pouchdb/pouchdb";
+import moment from "moment";
 
 const emptyDeposit = {
   senderError: "",
@@ -18,10 +19,6 @@ const emptyDeposit = {
   lockDuration: 0,
   amount: 0,
 };
-
-function toBytes(input) {
-  return utils.formatBytes32String(input);
-}
 
 export default function Deposit({
   address,
@@ -39,6 +36,7 @@ export default function Deposit({
 
   function handleChange(e, value, id) {
     if (e.target !== undefined) {
+      e.persist();
       console.log("1sst block::value:", value);
       console.log("e.target.id", e.target.id);
       console.log("e.target.value", e.target.value);
@@ -166,12 +164,12 @@ export default function Deposit({
       const saveResult = await pouchdb.save(
         pouchdb.setRemit(
           depositTxRecepit.transactionHash,
-          userSigner.address,
+          address,
           deposit.remitter,
           deposit.password,
           deposit.lockDuration,
           deposit.amount,
-          _remitKey,
+          deposit.remitKey,
           Number(depositTxRecepit.events[0].args[3]),
         ),
       );

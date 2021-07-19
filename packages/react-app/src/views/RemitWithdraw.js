@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Input } from "antd";
 import { utils, BigNumber, ethers } from "ethers";
+import moment from "moment";
 import pouchdb from "../pouchdb/pouchdb";
 
 const initWithdraw = {
@@ -8,18 +9,7 @@ const initWithdraw = {
   password: "",
   amount: 0,
 };
-export default function Withdraw({
-  address,
-  userSigner,
-  localProvider,
-  password,
-  tx,
-  writeContracts,
-  readContracts,
-  id,
-  remitKey,
-  remitId,
-}) {
+export default function Withdraw({ address, password, tx, writeContracts, readContracts, id, remitKey, remitId }) {
   const [withdraw, setWithdraw] = useState(initWithdraw);
   const [inputId, setInputId] = useState(id);
 
@@ -32,7 +22,6 @@ export default function Withdraw({
       console.log("Withdraw started...");
       console.log("writeContracts", writeContracts);
       console.log("readContracts", readContracts);
-      console.log("userSigner", userSigner);
       console.log("address", address);
       console.log("password", password);
       console.log("remitId", remitId);
@@ -68,14 +57,19 @@ export default function Withdraw({
         console.log("receiverPassword", utils.parseBytes32String(args.receiverPassword));
 
         // database update
-        console.log("remitId", remitId);
-        const updateResult = await pouchdb.update(remitId, "remitHasSettled", true);
-        console.log("updateResult", updateResult);
+        await updateSettledRemit();
       } catch (error) {
         console.log("withdrawTx:Error::", error);
         error.data && error.data !== undefined && console.log("withdraw::Error", error.data.message);
       }
     }
+  };
+
+  const updateSettledRemit = async () => {
+    console.log("remitId", remitId);
+    const updateResult1 = await pouchdb.update(remitId, "remitHasSettled", true);
+    const updateResult2 = await pouchdb.update(remitId, "settledTimestamp", moment().unix());
+    console.log("updateResult", updateResult1, updateResult2);
   };
 
   function handleSubmit(e) {

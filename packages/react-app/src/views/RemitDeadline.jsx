@@ -9,15 +9,12 @@ export default function RemitDeadline({ deadlineTimestamp, remitHasSettled }) {
     const week = 604800000;
     const _now = moment().unix() * 1000;
     const _timestamp = deadlineUnix * 1000;
-
     const isWithinWeek = _timestamp - _now < week;
     return isWithinWeek ? moment(_timestamp).calendar() : moment(_timestamp).format("MMM DD YYYY HH:mm a");
   };
 
   const expiredDate = deadlineUnix => {
-    return moment(deadlineUnix * 1000)
-      .startOf("day")
-      .fromNow();
+    return moment(deadlineUnix * 1000).fromNow();
   };
 
   const options = { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "numeric" };
