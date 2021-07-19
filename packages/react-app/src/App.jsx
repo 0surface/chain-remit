@@ -518,6 +518,7 @@ function App(props) {
               localProvider={localProvider}
               yourLocalBalance={yourLocalBalance}
               price={price}
+              tx={tx}
               writeContracts={writeContracts}
               readContracts={readContracts}
             />
