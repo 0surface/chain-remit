@@ -17,6 +17,7 @@ function setRemit(id, sender, remitter, password, lockDuration, amount, remitKey
     amount,
     remitKey,
     deadline,
+    settledTimestamp: 0,
     remitHasSettled: false,
   };
   return remit;
@@ -30,6 +31,11 @@ async function get(id) {
   return await db.get(id);
 }
 
+async function getByField(id, prop) {
+  const item = await db.get(id);
+  return item[`${prop}`];
+}
+
 async function update(id, prop, val) {
   const item = await db.get(`${id}`);
   item[`${prop}`] = val;
@@ -41,6 +47,21 @@ async function fetchAll() {
     return await db.allDocs({ include_docs: true });
   } catch (ex) {
     console.error("fetchData error: ", ex);
+  }
+}
+
+async function fetchByAddress(_address) {
+  try {
+    const docs = await db.allDocs({ include_docs: true });
+    console.log("docs:-", docs);
+    //    return docs.rows.map(d => d.doc).filter(d => (d.sender === _address) | (d.remitter === _address));
+    return docs.rows
+      .map(d => d.doc)
+      .filter(item => {
+        return item.remitter === _address || item.sender === _address;
+      });
+  } catch (ex) {
+    console.error("Pouchdb::fetchByAddress:error: ", ex);
   }
 }
 
@@ -66,8 +87,10 @@ export default {
   setRemit,
   save,
   get,
+  getByField,
   update,
   fetchAll,
+  fetchByAddress,
   fetchBySender,
   fetchByRemiiter,
 };
