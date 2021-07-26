@@ -8,11 +8,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     from: deployer,
     // args: ["Hello"],
     log: true,
+    autoMine: true,
   });
 
   await deploy("Remittance", {
     from: deployer,
     log: true,
+    autoMine: true,
   });
 
   /*

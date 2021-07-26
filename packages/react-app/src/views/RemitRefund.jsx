@@ -1,52 +1,60 @@
 import React, { useState } from "react";
-import { Button, Input } from "antd";
+import { Button, Input, Alert } from "antd";
 import { utils } from "ethers";
 import pouchdb from "../pouchdb/pouchdb";
 import moment from "moment";
 
-const initRefund = {
-  remitKey: "",
-  remitId: "",
-  hasRefunded: false,
-};
-
-export default function Refund({ address, tx, writeContracts, remitKey, remitId }) {
-  const [refund, setRefund] = useState(initRefund);
+export default function Refund({ localProvider, tx, readContracts, writeContracts, remitKey, remitId, amount }) {
   const [refunded, setRefunded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const _generateKey = async (address, password) => {
-    const _remitKey = await writeContracts.Remittance.generateKey(address, utils.formatBytes32String(password));
-    return _remitKey;
+  const validate = async () => {
+    //validate remit key
+    if (remitKey === undefined || remitKey === null || remitKey === "") {
+      setErrorMessage("Invalid remit key");
+      return false;
+    }
+
+    //validate ledger value
+    const ledgerValue = await readContracts.Remittance.ledger(remitKey);
+    if (utils.formatEther(Number(ledgerValue[0])) !== amount) {
+      setErrorMessage("Ledger value is not valid");
+      return false;
+    }
+
+    return true;
+  };
+
+  const staticCall = async () => {
+    //make static call(when not in dev chain)
+    const isHardhatDevChain = localProvider.connection.url.includes("localhost:8545");
+    if (!isHardhatDevChain) {
+      try {
+        await tx(writeContracts.Remittance.callStatic.refund(remitKey));
+      } catch (_staticCallError) {
+        let exceptionMessage = _staticCallError?.data["message"]?.split("'")[1]?.split("refund:")[1];
+        setErrorMessage(exceptionMessage);
+        return false;
+      }
+    }
+    return true;
   };
 
   const _refund = async remitId => {
-    /* static call */
-    try {
-      if (remitKey !== undefined) {
-        const ledgerValue = await writeContracts.Remittance.ledger(remitKey);
-        console.log("ledgerValue", ledgerValue);
-        console.log("ledgerValue", Number(ledgerValue[0]));
-        const staticCall = await writeContracts.Remittance.callStatic.refund(remitKey);
-        console.log("staticCall", staticCall);
-      }
-    } catch (_staticCallError) {
-      console.log("_staticCall", _staticCallError);
-      return;
-    }
+    const isValid = await validate();
+    if (!isValid) return;
 
-    /* tx call */
+    const callSuccess = await staticCall();
+    if (!callSuccess) return;
+
     try {
+      /* tx call */
       const refundTxObj = await tx(writeContracts.Remittance.refund(remitKey));
       const refundTxReceipt = await refundTxObj.wait();
-      //event
-      const refundEvent = refundTxReceipt.events[0];
-      const args = refundEvent.args;
-      //refundee, bytes32 indexed key, uint refunded
-      console.log("refundee", args.refundee);
-      console.log("key", args.key);
-      console.log("refunded", Number(args.refunded));
+
       //database update
-      const updateResult = await updateSettledRemit();
+      const refundTimestamp = await localProvider.getBlock(refundTxReceipt.blockNumber).timestamp;
+      const updateResult = await updateSettledRemit(refundTimestamp);
       if (updateResult) {
         setRefunded(true);
       }
@@ -57,16 +65,28 @@ export default function Refund({ address, tx, writeContracts, remitKey, remitId 
 
   function handleSubmit(e) {
     _refund(remitId);
+    //if success,
+    // update component state
+    //else show failure notification
+
+    // disable refund button
   }
 
-  const updateSettledRemit = async () => {
-    console.log("remitId", remitId);
+  const updateSettledRemit = async refundTimestamp => {
     const updateResult1 = await pouchdb.update(remitId, "remitHasSettled", true);
-    const updateResult2 = await pouchdb.update(remitId, "settledTimestamp", moment().unix());
-    // moment().unix()
-    console.log("updateResult", updateResult1, updateResult2);
-    return updateResult1 && updateResult2;
+    const updateResult2 = await pouchdb.update(remitId, "settledTimestamp", refundTimestamp);
+    return updateResult1.ok && updateResult2.ok;
   };
+
+  function onBlur(e) {
+    //validate input
+    //enable refund button
+  }
+
+  function handleChange(e) {
+    //validate input
+    //enable refund button
+  }
 
   // function handleChange(e) {
   //   e.persist();
@@ -80,15 +100,18 @@ export default function Refund({ address, tx, writeContracts, remitKey, remitId 
   // }
   return (
     <>
-      <Input.Password
+      {/* <Input.Password
         id="password"
         name="password"
         type="password"
         placeholder="password"
         style={{ width: "auto" }}
-        // onChange={handleChange}
-      />
+        onChange={handleChange}
+      /> */}
       <Button onClick={handleSubmit}>Refund</Button>
+      {errorMessage && (
+        <Alert style={{ width: "auto" }} message="Error" description={errorMessage} type="error" showIcon closable />
+      )}
     </>
   );
 }

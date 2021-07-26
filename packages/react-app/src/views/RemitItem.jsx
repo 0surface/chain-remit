@@ -37,7 +37,7 @@ export default function RemitItem({
   const [showArrow, setShowArrow] = useState(false);
 
   useEffect(() => {
-    console.log("remitter, address, addressIsRemitter", remitter, address, addressIsRemitter);
+    //console.log("remitter, address, addressIsRemitter", remitter, address, addressIsRemitter);
     setIsRemitter(addressIsRemitter);
     setExpired(hasExpired(deadline));
     arrowStatus();
@@ -52,7 +52,6 @@ export default function RemitItem({
     const remitterOk = addressIsRemitter && !expired && !remitHasSettled;
     const show = senderOk | remitterOk;
     setShowArrow(show);
-    console.log("senderOk | remitterOk, show", senderOk, remitterOk, show);
   };
 
   return (
@@ -76,7 +75,15 @@ export default function RemitItem({
           remitKey={remitKey}
         />
       ) : expired && !addressIsRemitter && showRefund ? (
-        <Refund address={address} tx={tx} writeContracts={writeContracts} remitKey={remitKey} remitId={remitId} />
+        <Refund
+          localProvider={localProvider}
+          tx={tx}
+          readContracts={readContracts}
+          writeContracts={writeContracts}
+          remitKey={remitKey}
+          remitId={remitId}
+          amount={amount}
+        />
       ) : (
         ""
       )}
