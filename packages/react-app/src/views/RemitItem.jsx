@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { RightCircleOutlined, LeftCircleOutlined } from "@ant-design/icons";
-import { Address, Balance } from "../components";
-import { utils, BigNumber, ethers } from "ethers";
+import { utils } from "ethers";
+
 import RemitDeadline from "./RemitDeadline";
-import moment from "moment";
-import { parseEther } from "@ethersproject/units";
-import pouchdb from "../pouchdb/pouchdb";
+import { Address, Balance } from "../components";
 import Withdraw from "./RemitWithdraw";
 import Refund from "./RemitRefund";
-import PasswordInput from "./PasswordInput";
 
 export default function RemitItem({
   address,
@@ -36,23 +33,28 @@ export default function RemitItem({
   const [expired, setExpired] = useState(false);
   const [showArrow, setShowArrow] = useState(false);
 
-  useEffect(() => {
-    //console.log("remitter, address, addressIsRemitter", remitter, address, addressIsRemitter);
-    setIsRemitter(addressIsRemitter);
-    setExpired(hasExpired(deadline));
-    arrowStatus();
-  }, [remitHasSettled, address]);
-
   const hasExpired = timestamp => {
     return timestamp * 1000 < Date.now();
+  };
+
+  const handleSettlement = _remitHasSettled => {
+    setShowArrow(!_remitHasSettled);
+    setExpanded(!_remitHasSettled);
   };
 
   const arrowStatus = () => {
     const senderOk = !addressIsRemitter && expired && !remitHasSettled;
     const remitterOk = addressIsRemitter && !expired && !remitHasSettled;
-    const show = senderOk | remitterOk;
+    const show = senderOk || remitterOk;
     setShowArrow(show);
   };
+
+  useEffect(() => {
+    // console.log("remitter, address, addressIsRemitter", remitter, address, addressIsRemitter);
+    setIsRemitter(addressIsRemitter);
+    setExpired(hasExpired(deadline));
+    arrowStatus();
+  }, [remitHasSettled, address]);
 
   return (
     <div style={{ display: "inline-block", width: "100%", justifyContent: "left" }}>
@@ -83,6 +85,8 @@ export default function RemitItem({
           remitKey={remitKey}
           remitId={remitId}
           amount={amount}
+          remitHasSettled={remitHasSettled}
+          onChange={handleSettlement}
         />
       ) : (
         ""

@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { AddressInput, EtherInput } from "../components";
-import { utils, ethers } from "ethers";
+import { utils } from "ethers";
+import { Button, Divider, Input } from "antd";
 import { parseEther } from "@ethersproject/units";
-import { Button, Divider, Input, Spin } from "antd";
+import { AddressInput, EtherInput } from "../components";
+
 import pouchdb from "../pouchdb/pouchdb";
-import moment from "moment";
 
 const emptyDeposit = {
   senderError: "",
@@ -20,18 +20,7 @@ const emptyDeposit = {
   amount: 0,
 };
 
-export default function Deposit({
-  address,
-  userSigner,
-  mainnetProvider,
-  localProvider,
-  yourLocalBalance,
-  price,
-  tx,
-  writeContracts,
-  readContracts,
-  logDepositedEvent,
-}) {
+export default function Deposit({ address, mainnetProvider, price, tx, writeContracts, readContracts }) {
   const [deposit, setDeposit] = useState(emptyDeposit);
 
   function handleChange(e, value, id) {
@@ -52,7 +41,7 @@ export default function Deposit({
       console.log("e", e);
       console.log("value:", value);
       console.log("id:", id);
-      console.log("`${id}Error`", `${id}Error`);
+      console.log("{id}Error", `${id}Error`);
       console.log("::deposit obj::", deposit);
       setDeposit(currDeposit => {
         console.log("::currDeposit obj::", currDeposit);

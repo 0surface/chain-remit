@@ -4,7 +4,17 @@ import { utils } from "ethers";
 import pouchdb from "../pouchdb/pouchdb";
 import moment from "moment";
 
-export default function Refund({ localProvider, tx, readContracts, writeContracts, remitKey, remitId, amount }) {
+export default function Refund({
+  localProvider,
+  tx,
+  readContracts,
+  writeContracts,
+  remitKey,
+  remitId,
+  amount,
+  remitHasSettled,
+  onChange,
+}) {
   const [refunded, setRefunded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -26,6 +36,7 @@ export default function Refund({ localProvider, tx, readContracts, writeContract
   };
 
   const staticCall = async () => {
+    //TODO:use env var here
     //make static call(when not in dev chain)
     const isHardhatDevChain = localProvider.connection.url.includes("localhost:8545");
     if (!isHardhatDevChain) {
@@ -57,15 +68,25 @@ export default function Refund({ localProvider, tx, readContracts, writeContract
       const updateResult = await updateSettledRemit(refundTimestamp);
       if (updateResult) {
         setRefunded(true);
+        console.log("refund success");
+        onChange(true);
       }
     } catch (_refundError) {
       console.log("_refund", _refundError);
+      return false;
     }
   };
 
   function handleSubmit(e) {
-    _refund(remitId);
     //if success,
+    const success = _refund(remitId);
+    if (success) {
+      console.log("refund success");
+      onChange(true);
+    } else {
+      console.log("refund failed");
+      onChange(false);
+    }
     // update component state
     //else show failure notification
 
@@ -98,7 +119,9 @@ export default function Refund({ localProvider, tx, readContracts, writeContract
   //     };
   //   });
   // }
-  return (
+  return refunded ? (
+    ""
+  ) : (
     <>
       {/* <Input.Password
         id="password"
@@ -108,6 +131,7 @@ export default function Refund({ localProvider, tx, readContracts, writeContract
         style={{ width: "auto" }}
         onChange={handleChange}
       /> */}
+
       <Button onClick={handleSubmit}>Refund</Button>
       {errorMessage && (
         <Alert style={{ width: "auto" }} message="Error" description={errorMessage} type="error" showIcon closable />
