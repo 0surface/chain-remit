@@ -21,7 +21,7 @@ import {
   useUserSigner,
 } from "./hooks";
 // import Hints from "./Hints";
-import { ExampleUI, Hints, Subgraph, RemitDeposit, RemitWithdraw, Remits } from "./views";
+import { ExampleUI, Hints, Subgraph, RemitDeposit, RemitWithdraw, Remits, RemitTable } from "./views";
 
 const { ethers } = require("ethers");
 /*
@@ -418,6 +418,16 @@ function App(props) {
               Remits
             </Link>
           </Menu.Item>
+          <Menu.Item key="/remittable">
+            <Link
+              onClick={() => {
+                setRoute("/remittable");
+              }}
+              to="/remittable"
+            >
+              RemitTable
+            </Link>
+          </Menu.Item>
           <Menu.Item key="/hints">
             <Link
               onClick={() => {
@@ -512,6 +522,19 @@ function App(props) {
           </Route>
           <Route path="/remits">
             <Remits
+              address={address}
+              userSigner={userSigner}
+              mainnetProvider={mainnetProvider}
+              localProvider={localProvider}
+              yourLocalBalance={yourLocalBalance}
+              price={price}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+            />
+          </Route>
+          <Route path="/remittable">
+            <RemitTable
               address={address}
               userSigner={userSigner}
               mainnetProvider={mainnetProvider}
