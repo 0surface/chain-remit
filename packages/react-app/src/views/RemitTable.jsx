@@ -6,6 +6,7 @@ import pouchdb from "../pouchdb/pouchdb";
 import { Address, Balance } from "../components";
 import RemitDeadline from "./RemitDeadline";
 import RemitStatus from "./RemitStatus";
+import RemitDetail from "./RemitDetail";
 
 export default function RemitTable({
   address,
@@ -121,7 +122,21 @@ export default function RemitTable({
           <Table
             columns={byMeColumns}
             expandable={{
-              expandedRowRender: record => <p style={{ margin: 0 }}>{record.lockDuration}</p>,
+              //expandedRowRender: record => <p style={{ margin: 0 }}>{record.lockDuration}</p>,
+              expandedRowRender: record => (
+                <RemitDetail
+                  address={address}
+                  userSigner={userSigner}
+                  localProvider={localProvider}
+                  mainnetProvider={mainnetProvider}
+                  price={price}
+                  tx={tx}
+                  writeContracts={writeContracts}
+                  readContracts={readContracts}
+                  record={record}
+                />
+              ),
+
               rowExpandable: record => record.name !== "Not Expandable",
             }}
             dataSource={remitData}
