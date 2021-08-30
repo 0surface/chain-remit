@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Button, Input, Alert } from "antd";
 import { utils } from "ethers";
 import pouchdb from "../pouchdb/pouchdb";
-import moment from "moment";
+
 
 export default function Refund({
   localProvider,
@@ -12,20 +12,19 @@ export default function Refund({
   remitKey,
   remitId,
   amount,
-  remitHasSettled,
   onChange,
 }) {
   const [refunded, setRefunded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const validate = async () => {
-    //validate remit key
+    // validate remit key
     if (remitKey === undefined || remitKey === null || remitKey === "") {
       setErrorMessage("Invalid remit key");
       return false;
     }
 
-    //validate ledger value
+    // validate ledger value
     const ledgerValue = await readContracts.Remittance.ledger(remitKey);
     if (utils.formatEther(Number(ledgerValue[0])) !== amount) {
       setErrorMessage("Ledger value is not valid");
@@ -36,14 +35,14 @@ export default function Refund({
   };
 
   const staticCall = async () => {
-    //TODO:use env var here
-    //make static call(when not in dev chain)
+    // TODO:use env var here
+    // make static call(when not in dev chain)
     const isHardhatDevChain = localProvider.connection.url.includes("localhost:8545");
     if (!isHardhatDevChain) {
       try {
         await tx(writeContracts.Remittance.callStatic.refund(remitKey));
       } catch (_staticCallError) {
-        let exceptionMessage = _staticCallError?.data["message"]?.split("'")[1]?.split("refund:")[1];
+        const exceptionMessage = _staticCallError.data.message.split("'")[1].split("refund:")[1];
         setErrorMessage(exceptionMessage);
         return false;
       }
@@ -63,7 +62,7 @@ export default function Refund({
       const refundTxObj = await tx(writeContracts.Remittance.refund(remitKey));
       const refundTxReceipt = await refundTxObj.wait();
 
-      //database update
+      // database update
       const refundTimestamp = await localProvider.getBlock(refundTxReceipt.blockNumber).timestamp;
       const updateResult = await updateSettledRemit(refundTimestamp);
       if (updateResult) {
@@ -73,7 +72,6 @@ export default function Refund({
       }
     } catch (_refundError) {
       console.log("_refund", _refundError);
-      return false;
     }
   };
 
@@ -88,7 +86,7 @@ export default function Refund({
       onChange(false);
     }
     // update component state
-    //else show failure notification
+    // else show failure notification
 
     // disable refund button
   }
@@ -100,13 +98,13 @@ export default function Refund({
   };
 
   function onBlur(e) {
-    //validate input
-    //enable refund button
+    // validate input
+    // enable refund button
   }
 
   function handleChange(e) {
-    //validate input
-    //enable refund button
+    // validate input
+    // enable refund button
   }
 
   // function handleChange(e) {

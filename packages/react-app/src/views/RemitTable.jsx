@@ -60,7 +60,7 @@ export default function RemitTable({
       title: "Action",
       dataIndex: "",
       key: "x",
-      render: () => <a>Refund</a>,
+      render: () => <a>Settle</a>,
     },
   ];
 
@@ -122,7 +122,6 @@ export default function RemitTable({
           <Table
             columns={byMeColumns}
             expandable={{
-              //expandedRowRender: record => <p style={{ margin: 0 }}>{record.lockDuration}</p>,
               expandedRowRender: record => (
                 <RemitDetail
                   address={address}

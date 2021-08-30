@@ -21,7 +21,7 @@ import {
   useUserSigner,
 } from "./hooks";
 // import Hints from "./Hints";
-import { ExampleUI, Hints, Subgraph, RemitDeposit, RemitWithdraw, Remits, RemitTable } from "./views";
+import { ExampleUI, Hints, Subgraph, RemitDeposit, RemitWithdraw, RemitTable } from "./views";
 
 const { ethers } = require("ethers");
 /*
@@ -398,26 +398,6 @@ function App(props) {
               Deposit
             </Link>
           </Menu.Item>
-          <Menu.Item key="/withdraw">
-            <Link
-              onClick={() => {
-                setRoute("/withdraw");
-              }}
-              to="/withdraw"
-            >
-              Withdraw
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/remits">
-            <Link
-              onClick={() => {
-                setRoute("/remits");
-              }}
-              to="/remits"
-            >
-              Remits
-            </Link>
-          </Menu.Item>
           <Menu.Item key="/remittable">
             <Link
               onClick={() => {
@@ -505,32 +485,6 @@ function App(props) {
               writeContracts={writeContracts}
               readContracts={readContracts}
               logDepositedEvent={logDepositedEvent}
-            />
-          </Route>
-          <Route path="/withdraw">
-            <RemitWithdraw
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
-            />
-          </Route>
-          <Route path="/remits">
-            <Remits
-              address={address}
-              userSigner={userSigner}
-              mainnetProvider={mainnetProvider}
-              localProvider={localProvider}
-              yourLocalBalance={yourLocalBalance}
-              price={price}
-              tx={tx}
-              writeContracts={writeContracts}
-              readContracts={readContracts}
             />
           </Route>
           <Route path="/remittable">
