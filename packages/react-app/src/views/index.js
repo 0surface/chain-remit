@@ -4,6 +4,6 @@ export { default as Subgraph } from "./Subgraph";
 export { default as RemitDeposit } from "./RemitDeposit";
 export { default as RemitWithdraw } from "./RemitWithdraw";
 export { default as RemitRefund } from "./RemitRefund";
-export { default as RemitTable } from "./RemitTable";
+export { default as Remits } from "./Remits";
 export { default as Remitdeadline } from "./RemitDeadline";
 export { default as PasswordInput } from "./PasswordInput";

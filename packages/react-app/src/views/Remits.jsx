@@ -8,7 +8,7 @@ import RemitDeadline from "./RemitDeadline";
 import RemitStatus from "./RemitStatus";
 import RemitDetail from "./RemitDetail";
 
-export default function RemitTable({
+export default function Remits({
   address,
   userSigner,
   mainnetProvider,
